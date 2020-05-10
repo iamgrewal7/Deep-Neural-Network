@@ -3,7 +3,7 @@ from utils import relu, sigmoid, relu_backward, sigmoid_backward
 
 
 class NeuralNetwork:
-  def __init__(self, X_train, y_train, layer_dims, learning_rate):
+  def __init__(self, X_train, y_train, layer_dims, learning_rate, lambd):
     self.X = X_train
     self.Y = y_train
     self.layer_dims = layer_dims
@@ -12,6 +12,7 @@ class NeuralNetwork:
     self.gradients = {}
     self.AL = None
     self.cost = None
+    self.lambd = lambd
   
   def initilaize_parameters(self):
     """
@@ -40,9 +41,10 @@ class NeuralNetwork:
     AL -- probability vector corresponding to your label predictions, shape (1, number of examples)
     Y -- true "label" vector (for example: containing 0 if non-cat, 1 if cat), shape (1, number of examples)
     """
+    L2_regularization_cost = (self.lambd/(2*self.Y.shape[1])) * sum(np.sum(np.square(value['W'])) for _, value in self.state.items())
     self.cost = np.squeeze(
       (1./self.Y.shape[1]) * (-np.dot(self.Y,np.log(self.AL).T) - np.dot(1-self.Y, np.log(1-self.AL).T))
-    )
+    ) + L2_regularization_cost
     assert(self.cost.shape == ())
 
   
@@ -109,7 +111,7 @@ class NeuralNetwork:
       m = A_prev.shape[1]
       dZ = gradients[layer+1]['dZ']
 
-      dW = (1/m) * np.dot(dZ, A_prev.T)
+      dW = (1/m) * np.dot(dZ, A_prev.T) + (self.lambd/m)*W
       db = (1/m) * np.sum(dZ, axis=1, keepdims=True)
       dA_prev = np.dot(W.T, dZ)
 

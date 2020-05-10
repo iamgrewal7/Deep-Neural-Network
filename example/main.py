@@ -36,7 +36,7 @@ test_x = test_x_flatten/255.
 
 
 layers_dims = [12288, 20, 7, 5, 1]
-neural_network = NeuralNetwork(train_x, train_y, layer_dims = layers_dims, learning_rate = 0.0075)
+neural_network = NeuralNetwork(train_x, train_y, layer_dims = layers_dims, learning_rate = 0.0075, lambd=0.6)
 neural_network.train(3000, print_cost=True)
 neural_network.predict(train_x, train_y)
 
