@@ -3,16 +3,20 @@ from utils import relu, sigmoid, relu_backward, sigmoid_backward
 
 
 class NeuralNetwork:
-  def __init__(self, X_train, y_train, layer_dims, learning_rate, lambd):
+  def __init__(self, X_train, y_train, layer_dims, learning_rate, lambd, dropout):
     self.X = X_train
     self.Y = y_train
     self.layer_dims = layer_dims
     self.state = self.initilaize_parameters()
     self.learning_rate = learning_rate
     self.gradients = {}
+    self.lambd = lambd
+    self.dropout = dropout
     self.AL = None
     self.cost = None
-    self.lambd = lambd
+
+    assert 0 < self.dropout < 1
+
   
   def initilaize_parameters(self):
     """
@@ -70,6 +74,11 @@ class NeuralNetwork:
       # Inner layers use relu
       Z = np.dot(self.state[layer]['W'], A_prev) + self.state[layer]['b']
       A = relu(Z)
+      D = np.random.rand(A.shape[0], A.shape[1])
+      D = D < self.dropout
+      A *= D
+      A /= self.dropout
+      self.state[layer]['D'] = D
       self.state[layer]['A'] = A
       self.state[layer]['A_prev'] = A_prev
       self.state[layer]['Z'] = Z
@@ -107,6 +116,7 @@ class NeuralNetwork:
     for layer in reversed(range(L)):
       A_prev = self.state[layer+1]['A_prev']
       W = self.state[layer+1]['W']
+      
       b = self.state[layer+1]['b']
       m = A_prev.shape[1]
       dZ = gradients[layer+1]['dZ']
@@ -114,6 +124,11 @@ class NeuralNetwork:
       dW = (1/m) * np.dot(dZ, A_prev.T) + (self.lambd/m)*W
       db = (1/m) * np.sum(dZ, axis=1, keepdims=True)
       dA_prev = np.dot(W.T, dZ)
+
+      if layer:
+        D = self.state[layer]['D']
+        dA_prev *= D
+        dA_prev /= self.dropout
 
       assert (dA_prev.shape == A_prev.shape)
       assert (dW.shape == W.shape)
